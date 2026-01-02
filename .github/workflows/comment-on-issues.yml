@@ -1,0 +1,38 @@
+name: Comment on new issues
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add comment based on label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const owner = context.repo.owner;
+            const commentByLabel = {
+              bug: `Thank you. We will fix it. Best regards, ${owner}.`,
+              feature: `Thank you, we will consider to include this feature. Best regards, ${owner}.`,
+              discussion: `Happy to discuss this topic with you. Best regards, ${owner}.`
+            };
+            let comment = null;
+            for (const label of issue.labels) {
+              const name = label.name.toLowerCase();
+              if (commentByLabel[name]) {
+                comment = commentByLabel[name];
+                break;
+              }
+            }
+            if (!comment) {
+              comment = 'Hello, world!';
+            }
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: comment
+            });
